@@ -12,6 +12,7 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const env = process.env.ENV
 
 async function processPdf(req: Request, res: Response) {
     const { cloudinaryUrl, recipientEmail } = req.body;
@@ -22,7 +23,8 @@ async function processPdf(req: Request, res: Response) {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const baseDir = path.join(__dirname, "..", "files");
+    const baseDir = env !== "production" ? path.join(__dirname, "..", "files") : path.join('/tmp', 'files');
+
     const randomStringForBasePath = crypto.randomBytes(16).toString("hex");
     const randomStringForSavedPath = crypto.randomBytes(16).toString("hex");
 
