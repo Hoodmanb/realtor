@@ -12,6 +12,7 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// force deployment
 const env = process.env.ENV
 
 async function processPdf(req: Request, res: Response) {
