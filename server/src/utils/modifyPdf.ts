@@ -28,6 +28,27 @@ function hexToRgb(hex: string): [number, number, number] {
     return [(bigint >> 16) / 255, ((bigint >> 8) & 255) / 255, (bigint & 255) / 255];
 }
 
+function wrapText(text: string, font: any, fontSize: number, maxWidth: number): string[] {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let line = '';
+
+    for (const word of words) {
+        const testLine = line ? `${line} ${word}` : word;
+        const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+        if (testWidth <= maxWidth) {
+            line = testLine;
+        } else {
+            if (line) lines.push(line);
+            line = word;
+        }
+    }
+
+    if (line) lines.push(line);
+    return lines;
+}
+
 export async function modifyPdf(basePdfPath: string, outputPdfPath: string, data: TableItem[]) {
     const pdfBytes = await fs.readFile(basePdfPath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -81,17 +102,36 @@ export async function modifyPdf(basePdfPath: string, outputPdfPath: string, data
             });
 
             if (Array.isArray(item.content) && item.content.every((i) => typeof i === 'string')) {
+                // let textY = y + boxHeight - contentStyle.fontSize - 5;
+                // (item.content as string[]).forEach((line, i) => {
+                //     page.drawText(`${i + 1}. ${line}`, {
+                //         x: x + 5,
+                //         y: textY,
+                //         size: contentStyle.fontSize,
+                //         font: contentFont,
+                //         color: rgb(...hexToRgb(contentStyle.color)),
+                //     });
+                //     textY -= contentStyle.fontSize + 2;
+                // });
                 let textY = y + boxHeight - contentStyle.fontSize - 5;
+
                 (item.content as string[]).forEach((line, i) => {
-                    page.drawText(`${i + 1}. ${line}`, {
-                        x: x + 5,
-                        y: textY,
-                        size: contentStyle.fontSize,
-                        font: contentFont,
-                        color: rgb(...hexToRgb(contentStyle.color)),
-                    });
-                    textY -= contentStyle.fontSize + 2;
+                    const numberedLine = `${i + 1}. ${line}`;
+                    const wrappedLines = wrapText(numberedLine, contentFont, contentStyle.fontSize, colWidth - 10);
+
+                    for (const wrappedLine of wrappedLines) {
+                        if (textY < y + 5) break; // prevent drawing below the box
+                        page.drawText(wrappedLine, {
+                            x: x + 5,
+                            y: textY,
+                            size: contentStyle.fontSize,
+                            font: contentFont,
+                            color: rgb(...hexToRgb(contentStyle.color)),
+                        });
+                        textY -= contentStyle.fontSize + 2;
+                    }
                 });
+
             } else if (Array.isArray(item.content) && item.content.every((i) => typeof i === 'object')) {
                 const rows = item.content as { label: string; value: string }[];
                 const itemHeight = boxHeight / rows.length;
@@ -100,11 +140,17 @@ export async function modifyPdf(basePdfPath: string, outputPdfPath: string, data
                     const itemY = y + boxHeight - (i + 1) * itemHeight;
                     const midX = x + colWidth / 2;
 
+                    const startX = x;
+                    const endX = x + colWidth;
+                    const lineY = itemY;
+
+
                     page.drawLine({
-                        start: { x: midX, y: itemY },
-                        end: { x: midX, y: itemY + itemHeight },
+                        start: { x: startX, y: lineY },
+                        end: { x: endX, y: lineY },
                         thickness: 0.5,
                     });
+
 
                     page.drawText(pair.label, {
                         x: x + 5,
@@ -141,6 +187,7 @@ export async function modifyPdf(basePdfPath: string, outputPdfPath: string, data
                     font: contentFont,
                     color: rgb(...hexToRgb(contentStyle.color)),
                 });
+
             }
         }
     }
