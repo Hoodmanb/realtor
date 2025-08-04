@@ -85,15 +85,15 @@ async function processPdf(req: Request, res: Response) {
             })); // Make sure `data` is defined somewhere
         console.log("PDF modified and saved to:", savedPath);
 
-        // console.log("Sending email...");
-        // await sendEmail({ pdfPath: savedPath, recipientEmail });
-        // console.log("Email sent to:", recipientEmail);
+        console.log("Sending email...");
+        await sendEmail({ pdfPath: savedPath, recipientEmail });
+        console.log("Email sent to:", recipientEmail);
 
         // Uncomment below if you want to auto-clean
-        // console.log("Cleaning up temp folders...");
-        // await fs.rm(baseFolderPath, { recursive: true, force: true });
-        // await fs.rm(savedFolderPath, { recursive: true, force: true });
-        // console.log("Temporary folders cleaned up.");
+        console.log("Cleaning up temp folders...");
+        await fs.rm(baseFolderPath, { recursive: true, force: true });
+        await fs.rm(savedFolderPath, { recursive: true, force: true });
+        console.log("Temporary folders cleaned up.");
 
         res.status(200).json({ message: "PDF processed and sent successfully!" });
 

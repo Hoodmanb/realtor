@@ -102,17 +102,6 @@ export async function modifyPdf(basePdfPath: string, outputPdfPath: string, data
             });
 
             if (Array.isArray(item.content) && item.content.every((i) => typeof i === 'string')) {
-                // let textY = y + boxHeight - contentStyle.fontSize - 5;
-                // (item.content as string[]).forEach((line, i) => {
-                //     page.drawText(`${i + 1}. ${line}`, {
-                //         x: x + 5,
-                //         y: textY,
-                //         size: contentStyle.fontSize,
-                //         font: contentFont,
-                //         color: rgb(...hexToRgb(contentStyle.color)),
-                //     });
-                //     textY -= contentStyle.fontSize + 2;
-                // });
                 let textY = y + boxHeight - contentStyle.fontSize - 5;
 
                 (item.content as string[]).forEach((line, i) => {
