@@ -3,19 +3,20 @@ import downloadPDF from "../utils/downloadPdf.js";
 import path from "path"
 import crypto from "crypto";
 import { TableItem } from "../types";
-import { modifyPdf } from "../utils/modifyPdf.js";
+import { modifyMultiplePdfs } from "../utils/modifyPdf.js";
 import sendEmail from "../utils/emailServices.js";
 import fs from "fs/promises";
 import fsSync from "fs";
 
 import { fileURLToPath } from "url";
+import downloadMultiplePDFs from "../utils/downloadPdf.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // force deployment
 const env = process.env.ENV
 
-interface DynamicDataProp {
+/*interface DynamicDataProp {
     clientName: string,
     project: string,
     planLayout: string,
@@ -26,20 +27,21 @@ interface DynamicDataProp {
     date: string,
     developer: string,
     sheetNumber: string
-}
+}*/
 
 async function processPdf(req: Request, res: Response) {
-    const { url, email, clientName, project, planLayout,
-        location, designerName, checkedBy, scale, date, developer, sheetNumber
+    const { urls, email, clientName,
+        location
     } = req.body;
 
-    const cloudinaryUrl = url
+    const cloudinaryUrls = urls
     const recipientEmail = email
+    const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '/');
 
     console.log("Received request body:", req.body);
 
-    if (!cloudinaryUrl || !recipientEmail) {
-        console.warn("Missing required fields:", { cloudinaryUrl, recipientEmail });
+    if (!cloudinaryUrls || !recipientEmail) {
+        console.warn("Missing required fields:", { cloudinaryUrls, recipientEmail });
         return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -74,15 +76,12 @@ async function processPdf(req: Request, res: Response) {
         }
 
         console.log("Starting downloadPDF...");
-        await downloadPDF({ cloudinaryUrl, basePath });
+        await downloadMultiplePDFs({ cloudinaryUrls, baseFolderPath });
         console.log("PDF downloaded to:", basePath);
 
         console.log("Starting modifyPdf...");
-        await modifyPdf(basePath, savedPath,
-            data({
-                clientName, project, planLayout,
-                location, designerName, checkedBy, scale, date, developer, sheetNumber
-            })); // Make sure `data` is defined somewhere
+        await modifyMultiplePdfs(basePath, savedPath,
+             clientName, location, date); // Make sure `data` is defined somewhere
         console.log("PDF modified and saved to:", savedPath);
 
         console.log("Sending email...");
@@ -107,7 +106,7 @@ async function processPdf(req: Request, res: Response) {
 
 
 
-const data = ({ clientName, project, planLayout,
+/*const data = ({ clientName, project, planLayout,
     location, designerName, checkedBy, scale, date, developer, sheetNumber }: DynamicDataProp) => {
     return [
         {
@@ -241,6 +240,6 @@ const data = ({ clientName, project, planLayout,
             },
         },
     ];
-}
+}*/
 
 export default processPdf

@@ -3,7 +3,7 @@ import { TransportOptions } from "nodemailer";
 
 interface SendEmailParams {
     pdfPath: string;
-    recipientEmail: string;
+    recipientEmail: string; 
 }
 const sendEmail = async ({ pdfPath, recipientEmail }: SendEmailParams): Promise<void> => {
     try {
