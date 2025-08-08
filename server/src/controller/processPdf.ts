@@ -1,38 +1,23 @@
 import { Request, Response } from "express";
-import downloadPDF from "../utils/downloadPdf.js";
 import path from "path"
 import crypto from "crypto";
-import { TableItem } from "../types";
 import { modifyMultiplePdfs } from "../utils/modifyPdf.js";
 import sendEmail from "../utils/emailServices.js";
 import fs from "fs/promises";
 import fsSync from "fs";
-
 import { fileURLToPath } from "url";
 import downloadMultiplePDFs from "../utils/downloadPdf.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// force deployment
+
 const env = process.env.ENV
 
-/*interface DynamicDataProp {
-    clientName: string,
-    project: string,
-    planLayout: string,
-    location: string,
-    designerName: string,
-    checkedBy: string,
-    scale: string,
-    date: string,
-    developer: string,
-    sheetNumber: string
-}*/
-
 async function processPdf(req: Request, res: Response) {
-    const { urls, email, clientName,
-        location
+    const { urls, email, clientName, location
     } = req.body;
+
+    console.log(clientName)
 
     const cloudinaryUrls = urls
     const recipientEmail = email
@@ -53,11 +38,11 @@ async function processPdf(req: Request, res: Response) {
     const baseFolderPath = path.join(baseDir, randomStringForBasePath);
     const savedFolderPath = path.join(baseDir, randomStringForSavedPath);
 
-    const basePath = path.join(baseFolderPath, "base.pdf");
-    const savedPath = path.join(savedFolderPath, "saved.pdf");
+    // const basePath = path.join(baseFolderPath, "base.pdf");
+    // const savedPath = path.join(savedFolderPath, "saved.pdf");
 
     console.log("Generated paths:");
-    console.log({ baseFolderPath, savedFolderPath, basePath, savedPath });
+    console.log({ baseFolderPath, savedFolderPath });
 
     try {
         // Ensure folders exist
@@ -77,15 +62,15 @@ async function processPdf(req: Request, res: Response) {
 
         console.log("Starting downloadPDF...");
         await downloadMultiplePDFs({ cloudinaryUrls, baseFolderPath });
-        console.log("PDF downloaded to:", basePath);
+        console.log("PDF downloaded to:", baseFolderPath);
 
         console.log("Starting modifyPdf...");
-        await modifyMultiplePdfs(basePath, savedPath,
-             clientName, location, date); // Make sure `data` is defined somewhere
-        console.log("PDF modified and saved to:", savedPath);
+        await modifyMultiplePdfs(baseFolderPath, savedFolderPath,
+            clientName, location, date); // Make sure `data` is defined somewhere
+        console.log("PDF modified and saved to:", savedFolderPath);
 
         console.log("Sending email...");
-        await sendEmail({ pdfPath: savedPath, recipientEmail });
+        await sendEmail({ pdfPath: savedFolderPath, recipientEmail });
         console.log("Email sent to:", recipientEmail);
 
         // Uncomment below if you want to auto-clean
@@ -103,143 +88,5 @@ async function processPdf(req: Request, res: Response) {
         });
     }
 }
-
-
-
-/*const data = ({ clientName, project, planLayout,
-    location, designerName, checkedBy, scale, date, developer, sheetNumber }: DynamicDataProp) => {
-    return [
-        {
-            label: 'CLIENT:',
-            content: clientName,
-            label_style: {
-                font: 'Helvetica-Bold',
-                fontSize: 6,
-                color: '#FF0000', // red
-            },
-            content_style: {
-                font: 'Helvetica-Bold',
-                fontSize: 10,
-                color: '#008000', // green
-            },
-            box_style: {
-                background: '#FFFFFF',
-                borderColor: '#000000',
-                borderWidth: 0.5,
-            },
-        },
-        {
-            label: 'PROJECT:',
-            content: project,
-            label_style: {
-                font: 'Helvetica-Bold',
-                fontSize: 6,
-                color: '#FF0000',
-            },
-            content_style: {
-                font: 'Helvetica-Bold',
-                fontSize: 10,
-                color: '#008000',
-            },
-            box_style: {
-                background: '#FFFFFF',
-                borderColor: '#000000',
-                borderWidth: 0.5,
-            },
-        },
-        {
-            label: 'NOTES',
-            content: [
-                'ALL DIMENSIONS ARE IN MILLIMETERS (MM)',
-                'ALL FIGURED DIMENSIONS ARE TO BE READ AS WRITTEN AND NOT SCALED.',
-                'THIS DRAWING SHOULD BE READ IN CONJUNCTION WITH ALL OTHER DRAWINGS SUPPLIED FOR THE EXECUTION OF THE WORKS DESCRIBED IN THESE DRAWINGS.',
-                'ARCHITECTS ARE TO BE NOTIFIED OF ANY DISCREPANCIES BETWEEN THIS DRAWING AND OTHERS INCLUDING THOSE ISSUED BY CONSULTANT'
-            ],
-            label_style: {
-                font: 'Helvetica',
-                fontSize: 8,
-                color: '#0000FF',
-            },
-            content_style: {
-                font: 'Helvetica',
-                fontSize: 5,
-                color: '#000000',
-            },
-            box_style: {
-                background: '#FFFFFF',
-                borderColor: '#000000',
-                borderWidth: 0.5,
-            },
-        },
-        {
-            label: '',
-            content: [
-                { label: 'Plan Layout:', value: planLayout },
-                { label: 'Location:', value: location },
-            ],
-            label_style: {
-                font: 'Helvetica-Bold',
-                fontSize: 6,
-                color: '#FF0000',
-            },
-            content_style: {
-                font: 'Helvetica-Bold',
-                fontSize: 10,
-                color: '#000000', // blue
-            },
-            box_style: {
-                background: '#FFFFFF',
-                borderColor: '#000000',
-                borderWidth: 0.5,
-            },
-        },
-        {
-            label: '',
-            content: [
-                { label: 'DESIGN & DRAWN BY:', value: designerName },
-                { label: 'CHECKED BY:', value: checkedBy },
-                { label: 'SCALE:', value: scale },
-                { label: 'DATE:', value: date },
-            ],
-            label_style: {
-                font: 'Helvetica-Bold',
-                fontSize: 4,
-                color: '#000000',
-            },
-            content_style: {
-                font: 'Helvetica-Bold',
-                fontSize: 6,
-                color: '#000000',
-            },
-            box_style: {
-                background: '#FFFFFF',
-                borderColor: '#000000',
-                borderWidth: 0.5,
-            },
-        },
-        {
-            label: '',
-            content: [
-                { label: 'Developer:', value: developer },
-                { label: 'Sheet Number:', value: sheetNumber },
-            ],
-            label_style: {
-                font: 'Helvetica-Bold',
-                fontSize: 6,
-                color: '#FF0000',
-            },
-            content_style: {
-                font: 'Helvetica',
-                fontSize: 10,
-                color: '#FF0000',
-            },
-            box_style: {
-                background: '#FFFFFF',
-                borderColor: '#000000',
-                borderWidth: 0.5,
-            },
-        },
-    ];
-}*/
 
 export default processPdf
