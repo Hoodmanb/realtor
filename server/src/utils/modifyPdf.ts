@@ -87,7 +87,7 @@ async function modifySinglePdfDynamic(
     const ascent = 0.6 * fontSize;
     const descent = 0.2 * fontSize;
 
-    const rectWidth = placeholderWidth + horizontalPadding * 5;
+    const rectWidth = placeholderWidth + horizontalPadding * 4;
     const rectHeight = ascent + descent + verticalPadding * 4;
 
     const rectX = ph.x - horizontalPadding;
