@@ -27,20 +27,18 @@ async function findPlaceholdersFromBytes(pdfBytes: Uint8Array): Promise<FoundPla
 
   const found: FoundPlaceholder[] = [];
 
+  // Match: any sequence of the same character repeated more than 3 times
+  const placeholderRegex = /^(.)(\1{3,})$/;
+
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
 
     for (const item of content.items) {
-      if ('str' in item && typeof item.str === 'string') {
-        const str = item.str;
+      if ("str" in item && typeof item.str === "string") {
+        const str = item.str.trim();
 
-        // Match placeholders — adjust if needed
-        if (
-          str === '*'.repeat(29) ||
-          str === '#'.repeat(30) ||
-          str === '$'.repeat(15)
-        ) {
+        if (placeholderRegex.test(str)) {
           const transform = (item as TextItem).transform;
           const x = transform[4];
           const y = transform[5];
@@ -54,46 +52,46 @@ async function findPlaceholdersFromBytes(pdfBytes: Uint8Array): Promise<FoundPla
   return found;
 }
 
-async function modifySinglePdf(
+
+async function modifySinglePdfDynamic(
   inputBytes: Uint8Array,
-  location: string,
-  clientName: string,
-  date: string
+  replacements: Record<string, string>
 ): Promise<Uint8Array> {
   const placeholders = await findPlaceholdersFromBytes(inputBytes);
   const pdfDoc = await PDFDocument.load(inputBytes);
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  const fontSize = 11; // 👈 Replacement text size
+  const fontSize = 11;
   const lineHeight = fontSize + 1;
-  const replacements: Record<string, string> = {
-    ['*'.repeat(29)]: clientName,
-    ['#'.repeat(30)]: location,
-    ['$'.repeat(15)]: date,
-  };
 
-  // Padding controls how much extra space around the white rectangle
-  const horizontalPadding = 0.5; // 👈 Reduce this for a tighter fit
-  const verticalPadding = 0.5;   // 👈 Reduce this for less top/bottom space
+  // Sort or keep order — here, we keep the order they appear
+  placeholders.sort((a, b) =>
+    a.pageIndex === b.pageIndex
+      ? a.y === b.y
+        ? a.x - b.x
+        : b.y - a.y
+      : a.pageIndex - b.pageIndex
+  );
 
-  for (const [index, { pageIndex, x, y, placeholder }] of placeholders.entries()) {
-    const page = pdfDoc.getPages()[pageIndex];
-    const replacement = replacements[placeholder] ?? '';
-    const lines = wrapText(replacement, placeholder.length);
+  const horizontalPadding = 0.5;
+  const verticalPadding = 0.5;
 
-    // Measure the placeholder width based on its actual font space
-    const placeholderWidth = font.widthOfTextAtSize(placeholder, fontSize);
+  placeholders.forEach((ph, idx) => {
+    const page = pdfDoc.getPages()[ph.pageIndex];
+    const placeholderChar = ph.placeholder[0];
+    const replacement = replacements[placeholderChar] ?? "";
 
-    // Height estimate: ascent + descent
+    const lines = wrapText(replacement, ph.placeholder.length);
+
+    const placeholderWidth = font.widthOfTextAtSize(ph.placeholder, fontSize);
     const ascent = 0.6 * fontSize;
     const descent = 0.2 * fontSize;
 
-    // Rectangle size exactly covering placeholder region
-    const rectWidth = index === 0 ? placeholderWidth + horizontalPadding * 70 : placeholderWidth + horizontalPadding * 5;
+    const rectWidth = placeholderWidth + horizontalPadding * 5;
     const rectHeight = ascent + descent + verticalPadding * 4;
 
-    const rectX = x - horizontalPadding;
-    const rectY = y - descent - verticalPadding;
+    const rectX = ph.x - horizontalPadding;
+    const rectY = ph.y - descent - verticalPadding;
 
     // Draw white rectangle over placeholder
     page.drawRectangle({
@@ -106,26 +104,29 @@ async function modifySinglePdf(
 
     // Draw replacement text
     lines.forEach((line, i) => {
-      const lineBaselineY = y + lineHeight * (lines.length - i - 1);
+      const lineBaselineY = ph.y + lineHeight * (lines.length - i - 1);
       page.drawText(line, {
-        x,
-        y: lineBaselineY, // 👈 Adjust this up/down if text isn't vertically aligned
+        x: ph.x,
+        y: lineBaselineY,
         font,
         size: fontSize,
         color: rgb(0, 0, 0),
       });
     });
-  }
+  });
 
   return await pdfDoc.save();
 }
+
 
 export async function modifyMultiplePdfs(
   basePath: string,
   savedPath: string,
   clientName: string,
-  location: string,
-  date: string
+  date: string,
+  plotNumber: string,
+  cadZone: string,
+  district: string,
 ) {
   const files = await fs.readdir(basePath);
 
@@ -136,7 +137,14 @@ export async function modifyMultiplePdfs(
 
       try {
         const inputBytes = await fs.readFile(inputPath);
-        const modifiedBytes = await modifySinglePdf(inputBytes, location, clientName, date);
+        const modifiedBytes = await modifySinglePdfDynamic(inputBytes,
+          {
+            "*": clientName,
+            "@": plotNumber,
+            "&": cadZone,
+            "#": district,
+            "$": date
+          });
         await fs.writeFile(outputPath, modifiedBytes);
         console.log(`✅ Processed: ${file}`);
       } catch (err) {

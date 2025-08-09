@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 const env = process.env.ENV
 
 async function processPdf(req: Request, res: Response) {
-    const { urls, email, clientName, location
+    const { urls, email, clientName, plotNumber, cadZone, district
     } = req.body;
 
     console.log(clientName)
@@ -66,7 +66,7 @@ async function processPdf(req: Request, res: Response) {
 
         console.log("Starting modifyPdf...");
         await modifyMultiplePdfs(baseFolderPath, savedFolderPath,
-            clientName, location, date); // Make sure `data` is defined somewhere
+            clientName, date, plotNumber, cadZone, district); // Make sure `data` is defined somewhere
         console.log("PDF modified and saved to:", savedFolderPath);
 
         console.log("Sending email...");
