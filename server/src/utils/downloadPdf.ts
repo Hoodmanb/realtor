@@ -10,15 +10,17 @@ interface DownloadMultipleParams {
 
 async function downloadMultiplePDFs({ cloudinaryUrls, baseFolderPath }: DownloadMultipleParams): Promise<void> {
   for (const url of cloudinaryUrls) {
-    const fileName = path.basename(url.split("?")[0]);
-
     try {
+      const fileName = path.basename(url.split("?")[0]);
+
       const response = await axios.get(url, { responseType: "stream" });
 
-      // Create directory if missing
+      const randomFolderName = crypto.randomBytes(8).toString("hex"); // 16 was overkill tbh
+      const filePath = path.join(baseFolderPath, fileName);
+
+      // Make sure the directory exists
       fs.mkdirSync(baseFolderPath, { recursive: true });
 
-      const filePath = path.join(baseFolderPath, fileName);
       const writer = fs.createWriteStream(filePath);
 
       await new Promise<void>((resolve, reject) => {
@@ -28,15 +30,58 @@ async function downloadMultiplePDFs({ cloudinaryUrls, baseFolderPath }: Download
           resolve();
         });
         writer.on("error", (err) => {
-          reject(new Error(`Error writing ${fileName}: ${err.message}`));
+          console.error(`❌ Error writing ${fileName}:`, err);
+          reject(err);
         });
       });
-
     } catch (err) {
-      // Throw so the parent can catch and handle
+      console.error(`❌ Failed to download from ${url}`, err);
       throw new Error(`Failed to download file from ${url}: ${(err as Error).message}`);
     }
   }
 }
 
 export default downloadMultiplePDFs;
+
+
+// import axios from "axios";
+// import fs from "fs";
+// import path from "path";
+
+// interface DownloadMultipleParams {
+//   cloudinaryUrls: string[];
+//   baseFolderPath: string;
+// }
+
+// async function downloadMultiplePDFs({ cloudinaryUrls, baseFolderPath }: DownloadMultipleParams): Promise<void> {
+//   for (const url of cloudinaryUrls) {
+//     const fileName = path.basename(url.split("?")[0]);
+
+//     try {
+//       const response = await axios.get(url, { responseType: "stream" });
+
+//       // Create directory if missing
+//       fs.mkdirSync(baseFolderPath, { recursive: true });
+
+//       const filePath = path.join(baseFolderPath, fileName);
+//       const writer = fs.createWriteStream(filePath);
+
+//       await new Promise<void>((resolve, reject) => {
+//         response.data.pipe(writer);
+//         writer.on("finish", () => {
+//           console.log(`✅ Downloaded: ${fileName} -> ${filePath}`);
+//           resolve();
+//         });
+//         writer.on("error", (err) => {
+//           reject(new Error(`Error writing ${fileName}: ${err.message}`));
+//         });
+//       });
+
+//     } catch (err) {
+//       // Throw so the parent can catch and handle
+//       throw new Error(`Failed to download file from ${url}: ${(err as Error).message}`);
+//     }
+//   }
+// }
+
+// export default downloadMultiplePDFs;
