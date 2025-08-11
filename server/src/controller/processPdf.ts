@@ -81,10 +81,10 @@ async function processPdf(req: Request, res: Response) {
         }
 
         // Cleanup
-        // await Promise.all([
-        //     fs.rm(baseFolderPath, { recursive: true, force: true }),
-        //     fs.rm(savedFolderPath, { recursive: true, force: true }),
-        // ]);
+        await Promise.all([
+            fs.rm(baseFolderPath, { recursive: true, force: true }),
+            fs.rm(savedFolderPath, { recursive: true, force: true }),
+        ]);
 
         return res
             .status(200)
