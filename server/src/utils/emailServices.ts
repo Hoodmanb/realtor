@@ -24,15 +24,24 @@ const sendEmail = async ({ pdfPath, recipientEmail }: SendEmailParams): Promise<
             path: path.join(pdfPath, file),
         }));
 
+        // const transporter = nodemailer.createTransport({
+        //     host: "smtp.gmail.com",
+        //     port: 465,
+        //     secure: true,
+        //     auth: {
+        //         user: process.env.SENDING_EMAIL,
+        //         pass: process.env.GMAIL_APP_PASSWORD,
+        //     },
+        // } as TransportOptions);
+
         const transporter = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 465,
-            secure: true,
+            service: "gmail",
             auth: {
                 user: process.env.SENDING_EMAIL,
                 pass: process.env.GMAIL_APP_PASSWORD,
             },
-        } as TransportOptions);
+        });
+
 
         const mailOptions = {
             from: process.env.SENDING_EMAIL,

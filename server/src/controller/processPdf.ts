@@ -75,8 +75,8 @@ async function processPdf(req: Request, res: Response) {
 
         // Uncomment below if you want to auto-clean
         console.log("Cleaning up temp folders...");
-        // await fs.rm(baseFolderPath, { recursive: true, force: true });
-        // await fs.rm(savedFolderPath, { recursive: true, force: true });
+        await fs.rm(baseFolderPath, { recursive: true, force: true });
+        await fs.rm(savedFolderPath, { recursive: true, force: true });
         console.log("Temporary folders cleaned up.");
 
         res.status(200).json({ message: "PDF processed and sent successfully!" });
