@@ -1,4 +1,3 @@
-declare module 'pdfjs-dist/legacy/build/pdf.min.js' {
-    const value: any;
-    export default value;
+declare module "pdfjs-dist/legacy/build/pdf.min.mjs" {
+    export * from "pdfjs-dist";
 }

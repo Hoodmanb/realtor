@@ -11,7 +11,8 @@
     "skipLibCheck": true,
   },
   "include": [
-    "src"
+    "src",
+    "src/types"
   ],
   "ts-node": {
     "esm": true
