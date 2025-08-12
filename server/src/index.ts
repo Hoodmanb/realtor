@@ -4,7 +4,7 @@ dotenv.config()
 import express, { Request, Response, NextFunction } from "express";
 import cors, { CorsOptions } from "cors";
 import processPdf from "./controller/processPdf.js";
-const port = process.env.PORT
+const port = process.env.PORT || 5000
 
 // express init
 const expApp = express();
