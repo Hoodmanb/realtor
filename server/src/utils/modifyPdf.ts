@@ -1,6 +1,7 @@
 import pkg from 'pdfjs-dist/legacy/build/pdf.js';
 const { getDocument, GlobalWorkerOptions } = pkg;
 
+
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import type { TextItem } from 'pdfjs-dist/types/src/display/api';
 import fs from 'fs/promises';

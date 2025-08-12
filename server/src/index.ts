@@ -4,6 +4,7 @@ dotenv.config()
 import express, { Request, Response, NextFunction } from "express";
 import cors, { CorsOptions } from "cors";
 import processPdf from "./controller/processPdf.js";
+const port = process.env.PORT
 
 // express init
 const expApp = express();
@@ -49,7 +50,7 @@ expApp.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     res.status(500).send("Internal server error");
 });
 
-expApp.listen(5000, () => console.log("Server running on port 5000"));
+expApp.listen(port, () => console.log(`Server running on port ${port}`));
 
 // If you're using this in another file, export it
 export default expApp;
