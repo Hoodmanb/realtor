@@ -71,8 +71,7 @@ async function processPdf(req: Request, res: Response) {
 
         // Step 3: Send Email
         try {
-            // await sendEmail({ pdfPath: savedFolderPath, recipientEmail, autoCardUrl });
-            console.error("sent email:");
+            await sendEmail({ pdfPath: savedFolderPath, recipientEmail, autoCardUrl });
         } catch (err) {
             console.error("Error sending email:", err);
             return res.status(500).json({
@@ -82,10 +81,10 @@ async function processPdf(req: Request, res: Response) {
         }
 
         // Cleanup
-        // await Promise.all([
-        //     fs.rm(baseFolderPath, { recursive: true, force: true }),
-        //     fs.rm(savedFolderPath, { recursive: true, force: true }),
-        // ]);
+        await Promise.all([
+            fs.rm(baseFolderPath, { recursive: true, force: true }),
+            fs.rm(savedFolderPath, { recursive: true, force: true }),
+        ]);
 
         return res
             .status(200)
